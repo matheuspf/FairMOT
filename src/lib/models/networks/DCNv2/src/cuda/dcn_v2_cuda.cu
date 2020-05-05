@@ -8,6 +8,8 @@
 #include <THC/THCAtomics.cuh>
 #include <THC/THCDeviceUtils.cuh>
 
+#include <c10/cuda/CUDAStream.h>
+
 extern THCState *state;
 
 // author: Charles Shang
@@ -83,7 +85,8 @@ dcn_v2_cuda_forward(const at::Tensor &input,
                          bias.contiguous().data<scalar_t>(), k_, 0.0f,
                          output_n.data<scalar_t>(), n_);
 
-        modulated_deformable_im2col_cuda(THCState_getCurrentStream(state),
+        modulated_deformable_im2col_cuda(//THCState_getCurrentStream(state),
+                                         c10::cuda::getCurrentCUDAStream(),
                                          input_n.data<scalar_t>(),
                                          offset_n.data<scalar_t>(),
                                          mask_n.data<scalar_t>(),
@@ -179,7 +182,8 @@ std::vector<at::Tensor> dcn_v2_cuda_backward(const at::Tensor &input,
                          columns.data<scalar_t>(), n);
 
         // gradient w.r.t. input coordinate data
-        modulated_deformable_col2im_coord_cuda(THCState_getCurrentStream(state),
+        modulated_deformable_col2im_coord_cuda(//THCState_getCurrentStream(state),
+                                               c10::cuda::getCurrentCUDAStream(),
                                                columns.data<scalar_t>(),
                                                input_n.data<scalar_t>(),
                                                offset_n.data<scalar_t>(),
@@ -191,7 +195,8 @@ std::vector<at::Tensor> dcn_v2_cuda_backward(const at::Tensor &input,
                                                grad_offset_n.data<scalar_t>(),
                                                grad_mask_n.data<scalar_t>());
         // gradient w.r.t. input data
-        modulated_deformable_col2im_cuda(THCState_getCurrentStream(state),
+        modulated_deformable_col2im_cuda(//THCState_getCurrentStream(state),
+                                         c10::cuda::getCurrentCUDAStream(),
                                          columns.data<scalar_t>(),
                                          offset_n.data<scalar_t>(),
                                          mask_n.data<scalar_t>(),
@@ -202,7 +207,8 @@ std::vector<at::Tensor> dcn_v2_cuda_backward(const at::Tensor &input,
                                          grad_input_n.data<scalar_t>());
 
         // gradient w.r.t. weight, dWeight should accumulate across the batch and group
-        modulated_deformable_im2col_cuda(THCState_getCurrentStream(state),
+        modulated_deformable_im2col_cuda(//THCState_getCurrentStream(state),
+                                         c10::cuda::getCurrentCUDAStream(),
                                          input_n.data<scalar_t>(),
                                          offset_n.data<scalar_t>(),
                                          mask_n.data<scalar_t>(),
